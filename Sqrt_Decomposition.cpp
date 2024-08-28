@@ -1,66 +1,68 @@
-class sqrtDecomposition {
-    private:
-        int blockSize;
-        vector<int> values, blocks;
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
 
-    public:
-        // preprocessing the input, calculating sum of blocks
-        sqrtDecomposition(vector<int>& input) {
-            int n = input.size();
-            blockSize = ceil(sqrt(n));
-            int blockIndex = -1;
+class SqrtDecomposition {
+public:
+    SqrtDecomposition(const vector<int>& input) {
+        n = input.size();
+        blockSize = ceil(sqrt(n));
+        blocks = vector<int>((n + blockSize - 1) / blockSize, 0); // Initialize blocks
 
-            values.resize(n);
-            blocks.resize(blockSize);
+        // Fill blocks with initial values
+        for (int i = 0; i < n; ++i) {
+            arr.push_back(input[i]);
+            blocks[i / blockSize] += input[i];
+        }
+    }
 
-            for(int i = 0; i < n; ++i) {
-                values[i] = input[i];
+    void update(int index, int value) {
+        int blockIndex = index / blockSize;
+        blocks[blockIndex] += value - arr[index]; // Update block sum
+        arr[index] = value;
+    }
 
-                // storing sum of each block of size sqrt(n)
-                if(i % blockSize == 0) blockIndex++;
-                blocks[blockIndex] += input[i];
+    int query(int left, int right) {
+        int sum = 0;
+        int startBlock = left / blockSize;
+        int endBlock = right / blockSize;
+
+        if (startBlock == endBlock) { // If the range is within the same block
+            for (int i = left; i <= right; ++i) {
+                sum += arr[i];
+            }
+        } else {
+            // Sum elements in the left part
+            for (int i = left; i < (startBlock + 1) * blockSize; ++i) {
+                sum += arr[i];
+            }
+            // Sum whole blocks in between
+            for (int i = startBlock + 1; i < endBlock; ++i) {
+                sum += blocks[i];
+            }
+            // Sum elements in the right part
+            for (int i = endBlock * blockSize; i <= right; ++i) {
+                sum += arr[i];
             }
         }
+        return sum;
+    }
 
-        // update - O(1) time
-        void pointUpdate(int k, int newValue) {
-            // finding block number of element to update
-            int block = k / blockSize;
-            blocks[block] += newValue - values[k]; // updated sum of block
-            values[k] = newValue;
-        }
-
-        // query - O(sqrt(n)) time
-        int rangeSumQuery(int left, int right) {
-            int sum = 0;
-
-            // calculating sum of leftmost block, it will handle the case of end points too
-            while (left < right and (left % blockSize != 0) and left != 0) {
-                sum += values[left];
-                left++;
-            }
-
-            // calculating sum of all complete blocks
-            while (left + blockSize - 1 <= right) {
-                sum += blocks[left / blockSize];
-                left += blockSize; // traversing whole block at once
-            }
-
-            // calculating sum of righttmost block
-            while (left <= right) {
-                sum += values[left];
-                left++;
-            }
-
-            return sum;
-        }
+private:
+    vector<int> arr; // Original array
+    vector<int> blocks; // Sqrt decomposition blocks
+    int blockSize;
+    int n;
 };
 
-// driver code
 int main() {
-    vector<int> input = {3, 2, 4, 5, 1, 1, 5, 3, 7};
-    sqrtDecomposition obj(input);
-    cout << obj.rangeSumQuery(0, 2) << '\n'; // output = 3+2+4 = 9
-    obj.pointUpdate(1, 6); // input[1] = 6
-    cout << obj.rangeSumQuery(0, 2); // output = 3+6+4 = 13
+    vector<int> input = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+    SqrtDecomposition sqrtDec(input);
+
+    cout << "Sum of range (0, 10): " << sqrtDec.query(0, 10) << endl;
+    sqrtDec.update(4, 10);
+    cout << "Sum of range (0, 10) after update: " << sqrtDec.query(0, 10) << endl;
+
+    return 0;
 }

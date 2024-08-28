@@ -3,7 +3,6 @@
 using namespace std;
 
 
-
 vector<int> SieveOfErathones(int n){
 
     vector<int> isprime(n + 1, true);
